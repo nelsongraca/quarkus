@@ -239,18 +239,6 @@ public class HibernateOrmConfig {
         public boolean generationHaltOnError;
 
         /**
-         * The default catalog to use for the database objects.
-         */
-        @ConfigItem
-        public Optional<String> defaultCatalog;
-
-        /**
-         * The default schema to use for the database objects.
-         */
-        @ConfigItem
-        public Optional<String> defaultSchema;
-
-        /**
          * The charset of the database.
          * <p>
          * Used for DDL generation and also for the SQL import scripts.
@@ -265,7 +253,7 @@ public class HibernateOrmConfig {
         public boolean globallyQuotedIdentifiers;
 
         public boolean isAnyPropertySet() {
-            return !"none".equals(generation) || defaultCatalog.isPresent() || defaultSchema.isPresent()
+            return !"none".equals(generation)
                     || generationHaltOnError
                     || !DEFAULT_CHARSET.equals(charset.name())
                     || globallyQuotedIdentifiers;

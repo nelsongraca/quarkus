@@ -155,6 +155,9 @@ public final class FastBootHibernatePersistenceProvider implements PersistencePr
             RuntimeSettings.Builder runtimeSettingsBuilder = new RuntimeSettings.Builder(buildTimeSettings,
                     integrationSettings);
 
+            //add the runtime settings
+            PersistenceUnitsHolder.getRuntimeSettings(persistenceUnitName).forEach(runtimeSettingsBuilder::put);
+
             // Inject the datasource
             injectDataSource(persistenceUnitName, runtimeSettingsBuilder);
 

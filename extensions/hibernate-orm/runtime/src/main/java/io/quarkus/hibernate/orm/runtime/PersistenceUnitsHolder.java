@@ -10,6 +10,7 @@ import javax.persistence.PersistenceException;
 
 import org.hibernate.MultiTenancyStrategy;
 import org.hibernate.boot.archive.scan.spi.Scanner;
+import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.integrator.spi.Integrator;
 import org.hibernate.jpa.boot.internal.ParsedPersistenceXmlDescriptor;
 import org.hibernate.jpa.boot.spi.PersistenceUnitDescriptor;
@@ -117,15 +118,40 @@ public final class PersistenceUnitsHolder {
         return fastBootMetadataBuilder.build();
     }
 
+    public static Map<String, Object> getRuntimeSettings(String persistenceUnitName) {
+        checkJPAInitialization();
+        Object key = persistenceUnitName;
+        if (persistenceUnitName == null) {
+            key = NO_NAME_TOKEN;
+        }
+        return persistenceUnits.runtimeSettings.get(key);
+    }
+
+    public static void addRuntimeConfig(HibernateOrmRuntimeConfig hibernateOrmRuntimeConfig) {
+        //only set for the default persistence unit, when multiple are to be supported this needs to be updated
+        final Map<String, Object> settingsMap = getRuntimeSettings("default");
+
+        if (hibernateOrmRuntimeConfig.database.defaultCatalog.isPresent()) {
+            settingsMap.put(AvailableSettings.DEFAULT_CATALOG, hibernateOrmRuntimeConfig.database.defaultCatalog.get());
+        }
+        if (hibernateOrmRuntimeConfig.database.defaultSchema.isPresent()) {
+            settingsMap.put(AvailableSettings.DEFAULT_SCHEMA, hibernateOrmRuntimeConfig.database.defaultSchema.get());
+        }
+    }
+
     private static class PersistenceUnits {
 
         private final List<PersistenceUnitDescriptor> units;
 
         private final Map<String, RecordedState> recordedStates;
 
+        private final Map<String, Map<String, Object>> runtimeSettings;
+
         public PersistenceUnits(final List<PersistenceUnitDescriptor> units, final Map<String, RecordedState> recordedStates) {
             this.units = units;
             this.recordedStates = recordedStates;
+            //pre-populate the runtime settings map
+            this.runtimeSettings = units.stream().collect(Collectors.toMap(PersistenceUnitDescriptor::getName, pu -> new HashMap<>()));
         }
     }
 

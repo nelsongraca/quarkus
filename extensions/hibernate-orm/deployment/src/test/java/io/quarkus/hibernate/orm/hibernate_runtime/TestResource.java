@@ -1,9 +1,9 @@
 package io.quarkus.hibernate.orm.hibernate_runtime;
 
-
-import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
-import org.hibernate.internal.SessionFactoryImpl;
-import org.hibernate.service.spi.ServiceRegistryImplementor;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -11,10 +11,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.hibernate.internal.SessionFactoryImpl;
+import org.hibernate.service.spi.ServiceRegistryImplementor;
 
 @Path("/hibernate")
 public class TestResource {
@@ -37,14 +37,14 @@ public class TestResource {
     @Path("/schema")
     @Produces(MediaType.TEXT_PLAIN)
     public String schema() {
-        return getEMF().getProperties().get("hibernate.default_schema").toString();
+        return String.valueOf(getEMF().getProperties().get("hibernate.default_schema"));
     }
 
     @GET()
     @Path("/catalog")
     @Produces(MediaType.TEXT_PLAIN)
     public String catalog() {
-        return getEMF().getProperties().get("hibernate.default_catalog").toString();
+        return String.valueOf(getEMF().getProperties().get("hibernate.default_catalog"));
     }
 
     private Connection getConnection() throws SQLException {
@@ -56,6 +56,5 @@ public class TestResource {
     private SessionFactoryImpl getEMF() {
         return (SessionFactoryImpl) entityManager.getEntityManagerFactory();
     }
-
 
 }

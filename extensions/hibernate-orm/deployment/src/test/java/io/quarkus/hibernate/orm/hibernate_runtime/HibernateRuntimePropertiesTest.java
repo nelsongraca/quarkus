@@ -33,8 +33,7 @@ public class HibernateRuntimePropertiesTest {
                     new AppArtifact("io.quarkus", "quarkus-jdbc-h2", Version.getVersion()),
                     new AppArtifact("io.quarkus", "quarkus-resteasy", Version.getVersion()),
                     new AppArtifact("io.quarkus", "quarkus-hibernate-validator", Version.getVersion()),
-                    new AppArtifact("org.hibernate", "hibernate-envers", "5.4.17.Final")
-            ))
+                    new AppArtifact("org.hibernate", "hibernate-envers", "5.4.17.Final")))
             .setRuntimeProperties(runtimeProperties);
 
     static {

@@ -43,16 +43,16 @@ public class HibernateOrmRecorder {
 
     /**
      * Initializes the JPA configuration to be used at runtime.
-     * 
-     * @param jtaEnabled Should JTA be enabled?
-     * @param strategy Multitenancy strategy to use.
+     *
+     * @param jtaEnabled                   Should JTA be enabled?
+     * @param strategy                     Multitenancy strategy to use.
      * @param multiTenancySchemaDataSource Data source to use in case of {@link MultiTenancyStrategy#SCHEMA} approach or
-     *        {@link null} in case the default data source.
-     * 
+     *                                     {@link null} in case the default data source.
+     *
      * @return
      */
     public BeanContainerListener initializeJpa(boolean jtaEnabled, MultiTenancyStrategy strategy,
-            String multiTenancySchemaDataSource) {
+                                               String multiTenancySchemaDataSource) {
         return new BeanContainerListener() {
             @Override
             public void created(BeanContainer beanContainer) {
@@ -83,19 +83,23 @@ public class HibernateOrmRecorder {
     }
 
     public BeanContainerListener initMetadata(List<ParsedPersistenceXmlDescriptor> parsedPersistenceXmlDescriptors,
-            Scanner scanner, Collection<Class<? extends Integrator>> additionalIntegrators,
-            Collection<Class<? extends ServiceContributor>> additionalServiceContributors,
-            PreGeneratedProxies proxyDefinitions, MultiTenancyStrategy strategy) {
+                                              Scanner scanner, Collection<Class<? extends Integrator>> additionalIntegrators,
+                                              Collection<Class<? extends ServiceContributor>> additionalServiceContributors,
+                                              PreGeneratedProxies proxyDefinitions, MultiTenancyStrategy strategy) {
         return new BeanContainerListener() {
             @Override
             public void created(BeanContainer beanContainer) {
                 PersistenceUnitsHolder.initializeJpa(parsedPersistenceXmlDescriptors, scanner, additionalIntegrators,
-                        additionalServiceContributors, proxyDefinitions, strategy);
+                                                     additionalServiceContributors, proxyDefinitions, strategy);
             }
         };
     }
 
     public void startAllPersistenceUnits(BeanContainer beanContainer) {
         beanContainer.instance(JPAConfig.class).startAll();
+    }
+
+    public void doRuntimeConfig(HibernateOrmRuntimeConfig hibernateOrmRuntimeConfig) {
+        PersistenceUnitsHolder.addRuntimeConfig(hibernateOrmRuntimeConfig);
     }
 }

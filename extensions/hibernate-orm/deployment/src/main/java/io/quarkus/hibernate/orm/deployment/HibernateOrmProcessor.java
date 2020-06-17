@@ -103,6 +103,7 @@ import io.quarkus.hibernate.orm.deployment.integration.HibernateOrmIntegrationRu
 import io.quarkus.hibernate.orm.runtime.DefaultEntityManagerFactoryProducer;
 import io.quarkus.hibernate.orm.runtime.DefaultEntityManagerProducer;
 import io.quarkus.hibernate.orm.runtime.HibernateOrmRecorder;
+import io.quarkus.hibernate.orm.runtime.HibernateOrmRuntimeConfig;
 import io.quarkus.hibernate.orm.runtime.JPAConfig;
 import io.quarkus.hibernate.orm.runtime.JPAResourceReferenceProvider;
 import io.quarkus.hibernate.orm.runtime.RequestScopedEntityManagerHolder;
@@ -811,12 +812,6 @@ public final class HibernateOrmProcessor {
                 desc.getProperties().setProperty(AvailableSettings.HBM2DDL_CHARSET_NAME,
                         hibernateConfig.database.charset.name());
 
-                hibernateConfig.database.defaultCatalog.ifPresent(
-                        catalog -> desc.getProperties().setProperty(AvailableSettings.DEFAULT_CATALOG, catalog));
-
-                hibernateConfig.database.defaultSchema.ifPresent(
-                        schema -> desc.getProperties().setProperty(AvailableSettings.DEFAULT_SCHEMA, schema));
-
                 if (hibernateConfig.database.globallyQuotedIdentifiers) {
                     desc.getProperties().setProperty(AvailableSettings.GLOBALLY_QUOTED_IDENTIFIERS, "true");
                 }
@@ -996,4 +991,9 @@ public final class HibernateOrmProcessor {
         }
     }
 
+    @BuildStep
+    @Record(RUNTIME_INIT)
+    public void runtimeConfigStep(HibernateOrmRecorder recorder, HibernateOrmRuntimeConfig hibernateOrmRuntimeConfig) {
+        recorder.doRuntimeConfig(hibernateOrmRuntimeConfig);
+    }
 }
