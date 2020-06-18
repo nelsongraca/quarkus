@@ -151,7 +151,8 @@ public final class PersistenceUnitsHolder {
             this.units = units;
             this.recordedStates = recordedStates;
             //pre-populate the runtime settings map
-            this.runtimeSettings = units.stream().collect(Collectors.toMap(PersistenceUnitDescriptor::getName, pu -> new HashMap<>()));
+            this.runtimeSettings = units.stream()
+                    .collect(Collectors.toMap(PersistenceUnitDescriptor::getName, pu -> new HashMap<>()));
         }
     }
 

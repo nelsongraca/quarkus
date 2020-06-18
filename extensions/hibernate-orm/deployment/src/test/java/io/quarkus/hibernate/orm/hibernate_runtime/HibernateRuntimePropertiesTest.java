@@ -1,19 +1,21 @@
 package io.quarkus.hibernate.orm.hibernate_runtime;
 
-import io.quarkus.bootstrap.model.AppArtifact;
-import io.quarkus.builder.Version;
-import io.quarkus.test.QuarkusProdModeTest;
-import io.restassured.RestAssured;
+import static org.hamcrest.Matchers.is;
+
+import java.util.Arrays;
+import java.util.HashMap;
+
+import javax.transaction.Transactional;
+
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.transaction.Transactional;
-import java.util.Arrays;
-import java.util.HashMap;
-
-import static org.hamcrest.Matchers.is;
+import io.quarkus.bootstrap.model.AppArtifact;
+import io.quarkus.builder.Version;
+import io.quarkus.test.QuarkusProdModeTest;
+import io.restassured.RestAssured;
 
 /**
  * @author Nelson Graça graca.nelson@gmail.com
