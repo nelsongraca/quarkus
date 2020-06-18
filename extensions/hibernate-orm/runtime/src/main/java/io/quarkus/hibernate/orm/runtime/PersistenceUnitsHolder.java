@@ -1,13 +1,9 @@
 package io.quarkus.hibernate.orm.runtime;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import javax.persistence.PersistenceException;
-
+import io.quarkus.hibernate.orm.runtime.boot.FastBootMetadataBuilder;
+import io.quarkus.hibernate.orm.runtime.boot.LightPersistenceXmlDescriptor;
+import io.quarkus.hibernate.orm.runtime.proxies.PreGeneratedProxies;
+import io.quarkus.hibernate.orm.runtime.recording.RecordedState;
 import org.hibernate.MultiTenancyStrategy;
 import org.hibernate.boot.archive.scan.spi.Scanner;
 import org.hibernate.cfg.AvailableSettings;
@@ -16,10 +12,12 @@ import org.hibernate.jpa.boot.internal.ParsedPersistenceXmlDescriptor;
 import org.hibernate.jpa.boot.spi.PersistenceUnitDescriptor;
 import org.hibernate.service.spi.ServiceContributor;
 
-import io.quarkus.hibernate.orm.runtime.boot.FastBootMetadataBuilder;
-import io.quarkus.hibernate.orm.runtime.boot.LightPersistenceXmlDescriptor;
-import io.quarkus.hibernate.orm.runtime.proxies.PreGeneratedProxies;
-import io.quarkus.hibernate.orm.runtime.recording.RecordedState;
+import javax.persistence.PersistenceException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class PersistenceUnitsHolder {
 
@@ -31,11 +29,11 @@ public final class PersistenceUnitsHolder {
     /**
      * Initialize JPA for use in Quarkus. In a native image. This must be called
      * from within a static init method.
-     *
+     * <p>
      * In general the <code>parsedPersistenceXmlDescriptors</code> will be provided
      * by calling {@link #loadOriginalXMLParsedDescriptors()} In Quarkus this is
      * done in Quarkus's JPA ResourceProcessor.
-     *
+     * <p>
      * The scanner may be null to use the default scanner, or a custom scanner can be
      * used to stop Hibernate scanning. It is expected that the scanner will be
      * provided by Quarkus via its hold of Jandex info.
@@ -44,12 +42,12 @@ public final class PersistenceUnitsHolder {
      * @param scanner
      */
     static void initializeJpa(List<ParsedPersistenceXmlDescriptor> parsedPersistenceXmlDescriptors,
-            Scanner scanner, Collection<Class<? extends Integrator>> additionalIntegrators,
-            Collection<Class<? extends ServiceContributor>> additionalServiceContributors,
-            PreGeneratedProxies preGeneratedProxies, MultiTenancyStrategy strategy) {
+                              Scanner scanner, Collection<Class<? extends Integrator>> additionalIntegrators,
+                              Collection<Class<? extends ServiceContributor>> additionalServiceContributors,
+                              PreGeneratedProxies preGeneratedProxies, MultiTenancyStrategy strategy) {
         final List<PersistenceUnitDescriptor> units = convertPersistenceUnits(parsedPersistenceXmlDescriptors);
         final Map<String, RecordedState> metadata = constructMetadataAdvance(units, scanner, additionalIntegrators,
-                preGeneratedProxies, strategy);
+                                                                             preGeneratedProxies, strategy);
 
         persistenceUnits = new PersistenceUnits(units, metadata);
     }
@@ -72,8 +70,9 @@ public final class PersistenceUnitsHolder {
             final List<ParsedPersistenceXmlDescriptor> parsedPersistenceXmlDescriptors) {
         try {
             return parsedPersistenceXmlDescriptors.stream().map(LightPersistenceXmlDescriptor::new)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
+                                                  .collect(Collectors.toList());
+        }
+        catch (Exception e) {
             throw new PersistenceException("Unable to locate persistence units", e);
         }
     }
@@ -111,10 +110,10 @@ public final class PersistenceUnitsHolder {
     }
 
     public static RecordedState createMetadata(PersistenceUnitDescriptor unit, Scanner scanner,
-            Collection<Class<? extends Integrator>> additionalIntegrators, PreGeneratedProxies proxyDefinitions,
-            MultiTenancyStrategy strategy) {
+                                               Collection<Class<? extends Integrator>> additionalIntegrators, PreGeneratedProxies proxyDefinitions,
+                                               MultiTenancyStrategy strategy) {
         FastBootMetadataBuilder fastBootMetadataBuilder = new FastBootMetadataBuilder(unit, scanner, additionalIntegrators,
-                proxyDefinitions, strategy);
+                                                                                      proxyDefinitions, strategy);
         return fastBootMetadataBuilder.build();
     }
 
@@ -129,13 +128,24 @@ public final class PersistenceUnitsHolder {
 
     public static void addRuntimeConfig(HibernateOrmRuntimeConfig hibernateOrmRuntimeConfig) {
         //only set for the default persistence unit, when multiple are to be supported this needs to be updated
-        final Map<String, Object> settingsMap = getRuntimeSettings("default");
 
-        if (hibernateOrmRuntimeConfig.database.defaultCatalog.isPresent()) {
-            settingsMap.put(AvailableSettings.DEFAULT_CATALOG, hibernateOrmRuntimeConfig.database.defaultCatalog.get());
-        }
-        if (hibernateOrmRuntimeConfig.database.defaultSchema.isPresent()) {
-            settingsMap.put(AvailableSettings.DEFAULT_SCHEMA, hibernateOrmRuntimeConfig.database.defaultSchema.get());
+        if (persistenceUnits != null) {
+            for (PersistenceUnitDescriptor unit : persistenceUnits.units) {
+                //not very happy with this, but because there is the default one and the default-reactive one seems the best way so far
+                if (unit.getName().startsWith("default")) {
+                    final Map<String, Object> settingsMap = getRuntimeSettings(unit.getName());
+                    if (hibernateOrmRuntimeConfig.database.defaultCatalog.isPresent()) {
+                        settingsMap.put(AvailableSettings.DEFAULT_CATALOG, hibernateOrmRuntimeConfig.database.defaultCatalog.get());
+                        unit.getProperties().put(AvailableSettings.DEFAULT_CATALOG,
+                                                 hibernateOrmRuntimeConfig.database.defaultCatalog.get());
+                    }
+                    if (hibernateOrmRuntimeConfig.database.defaultSchema.isPresent()) {
+                        settingsMap.put(AvailableSettings.DEFAULT_SCHEMA, hibernateOrmRuntimeConfig.database.defaultSchema.get());
+                        unit.getProperties().put(AvailableSettings.DEFAULT_SCHEMA,
+                                                 hibernateOrmRuntimeConfig.database.defaultSchema.get());
+                    }
+                }
+            }
         }
     }
 
@@ -152,7 +162,7 @@ public final class PersistenceUnitsHolder {
             this.recordedStates = recordedStates;
             //pre-populate the runtime settings map
             this.runtimeSettings = units.stream()
-                    .collect(Collectors.toMap(PersistenceUnitDescriptor::getName, pu -> new HashMap<>()));
+                                        .collect(Collectors.toMap(PersistenceUnitDescriptor::getName, pu -> new HashMap<>()));
         }
     }
 
